@@ -3,17 +3,23 @@
 <plist version="1.0">
 <dict>
 	<key>method</key>
-	<string>app-store</string>
+	<string>development</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>com.kmt518.autoPackageProj</key>
+		<key>com.kmt518.KMTDeparture</key>
 		<string>48570f66-3629-4f93-8c48-d782ad40f23d</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>iPhone Developer: lei zhang (QYNKJGF5K9)</string>
 	<key>signingStyle</key>
 	<string>manual</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
 	<key>teamID</key>
 	<string>5DHMHMME2V</string>
+	<key>uploadBitcode</key>
+	<true/>
+	<key>uploadSymbols</key>
+	<true/>
 </dict>
 </plist>

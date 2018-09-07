@@ -1,25 +1,8 @@
-#!/usr/bin/env bash
 
-findProjName(){
+brew --version
 
-    dir=$(ls)
+pod --version
 
-    x="${dir}"
+echo  | sudo -S gem install fastlane
 
-    OLD_IFS="$IFS"
-    IFS="
-    "
-    array=($x)
-    IFS="$OLD_IFS"
-
-    for each in ${array[*]}
-    do
-    if [ ${each} != "KMTGlobe" ];then
-    echo "findout!: ${each}"
-    return "$each"
-    fi
-    done
-
-
-
-}
+sudo gem install cocoapods

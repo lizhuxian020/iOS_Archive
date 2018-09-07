@@ -1,11 +1,12 @@
 #!/bin/sh
 
 
-source ./tool.sh
+#cd "/Users/mac/KMTProject"
 
-cd "/Users/mac/KMTProject"
+#TaskWorkSpacePath="/Users/mac/KMTProject"
 
-TaskWorkSpacePath="/Users/mac/KMTProject"
+TaskWorkSpacePath=$(pwd)
+echo TaskWorkSpacePath: $TaskWorkSpacePath
 
 scheme=""
 # ============= 获取schemeName =============
