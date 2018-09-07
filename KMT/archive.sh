@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#测试包配置文件: 48570f66-3629-4f93-8c48-d782ad40f23d
+#测试包配置文件: da07d28b-cff3-4f3b-b073-1de66d1a1ec4
 #发布包配置文件:
 echo "===================Archive Script===================="
 echo "Author:Mist"#尊重原创者
@@ -12,7 +12,7 @@ echo "===================Archive Script===================="
 export LANG=en_US.UTF-8
 #base config
 #开发配置
-provisioningProfile_dev="48570f66-3629-4f93-8c48-d782ad40f23d"
+provisioningProfile_dev="da07d28b-cff3-4f3b-b073-1de66d1a1ec4"
 #开发证书
 codeSignIdentity_dev="iPhone Developer: lei zhang (QYNKJGF5K9)"
 #TODO: 生产配置
@@ -26,7 +26,7 @@ codeSignIdentity_dis=""
 #时间
 ArchiveTime=`date +%Y%m%d%H%M%S`
 #包库的路径
-ArchivePackagePath="/Users/Shared/Jenkins/Home/iOS_ARCHIVE_PACKAGE"
+ArchivePackagePath="/Users/mac/.jenkins/iOS_ARCHIVE_PACKAGE"
 #TODO: 配置是否为Debug, 根据入参判断, Release \ Debug
 Configuration="Debug"
 #TODO: archiverOpt.plist配置(根据入参配置: development / app-store)
@@ -35,8 +35,7 @@ Method=development
 SigningStyle=manual
 #一个AppleID一个teamID, 改变不了的
 TeamID=5DHMHMME2V
-#TODO: 这个也是要根据入参不同进行修改,
-ExportOptionsPlist="/Users/Shared/Jenkins/Home/iOS_Archive/KMT/ExportOptions.plist"
+
 #log是否存文档
 log_archive_A=0
 log_archive_B=1
@@ -45,6 +44,16 @@ log_archive_B=1
 # ============= 获取wordSpace路径 =============
 TaskWorkSpacePath=$(pwd)
 echo TaskWorkSpacePath: $TaskWorkSpacePath
+
+# ============= 判断ExportOptions.plist =============
+PlistName="ExportOptions.plist"
+ExportOptionsPlist="${TaskWorkSpacePath}/${PlistName}"
+# 这里的-f参数判断$ExportOptionsPlist是否存在
+if [ ! -f "${ExportOptionsPlist}" ]; then
+/usr/libexec/PlistBuddy -c "save" ${ExportOptionsPlist}
+else
+echo "exist"
+fi
 
 scheme=""
 # ============= 获取schemeName =============
@@ -96,7 +105,7 @@ WorkspaceName="${ProjectName}.xcworkspace"
 #工程路径
 ProjectPath="${TaskWorkSpacePath}/${schemeFolder}"
 #工作空间路径
-WorkspacePath="${ProjectPath}/${workspaceName}"
+WorkspacePath="${ProjectPath}/${WorkspaceName}"
 #InfoPlist路径
 InfoPlistPath="${ProjectPath}/${scheme}/Info.plist"
 #TODO: 这里要判断infoPlist是否存在, 现在暂时不管
@@ -120,7 +129,8 @@ dSYMPath="${PackagePath}/archive/dSYMs/${ProjectName}.dSYM"
 ExportPath="${PackagePath}/exportPackage"
 #ipa路径
 ipaPath="${ExportPath}/${ProjectName}.ipa"
-
+#拷贝到这个共享目录
+ExportPackageTo="/Users/mac/iOS_ARCHIVE_PACKAGE/${BUILD_MODE}/${BundleID}/${ArchiveTime}"
 
 
 
@@ -132,16 +142,42 @@ ipaPath="${ExportPath}/${ProjectName}.ipa"
 
 #配置ipa输出的plistOp
 echo "=============Configure export plist file============="
+
 /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:${BundleID} string ${appStoreProvisioningProfile}" "${ExportOptionsPlist}"
 if [ $? -eq 0 ]; then
 echo "add provisioningProfiles success"
 else
 /usr/libexec/PlistBuddy -c "Set provisioningProfiles:${BundleID} ${appStoreProvisioningProfile}" "${ExportOptionsPlist}"
 fi
+
+/usr/libexec/PlistBuddy -c "Add method string ${Method}" "${ExportOptionsPlist}"
+if [ $? -eq 0 ]; then
+echo "add method success"
+else
 /usr/libexec/PlistBuddy -c "Set method ${Method}" "${ExportOptionsPlist}"
+fi
+
+/usr/libexec/PlistBuddy -c "Add :signingCertificate string ${codeSignIdentity}" "${ExportOptionsPlist}"
+if [ $? -eq 0 ]; then
+echo "add signingCertificate success"
+else
 /usr/libexec/PlistBuddy -c "Set signingCertificate ${codeSignIdentity}" "${ExportOptionsPlist}"
+fi
+
+/usr/libexec/PlistBuddy -c "Add :signingStyle string ${SigningStyle}" "${ExportOptionsPlist}"
+if [ $? -eq 0 ]; then
+echo "add signingStyle success"
+else
 /usr/libexec/PlistBuddy -c "Set signingStyle ${SigningStyle}" "${ExportOptionsPlist}"
+fi
+
+/usr/libexec/PlistBuddy -c "Add :teamID string ${TeamID}" "${ExportOptionsPlist}"
+if [ $? -eq 0 ]; then
+echo "add teamID success"
+else
 /usr/libexec/PlistBuddy -c "Set teamID ${TeamID}" "${ExportOptionsPlist}"
+fi
+
 echo "===================Configure Done===================="
 
 #创建日志路径
@@ -153,6 +189,18 @@ echo LogPath: ${LogPath}
 else
 echo "===================Create Failed====================="
 echo "Please check the log file in ${LogPath} for detail"
+exit 1
+fi
+
+#创建导出路径
+echo "==============Create ExportPackageTo=============="
+mkdir -p ${ExportPackageTo}
+if [ $? -eq 0 ];then
+echo "===================Create success===================="
+echo ExportPackageTo: ${ExportPackageTo}
+else
+echo "===================Create Failed====================="
+echo "Please check the log file in ${ExportPackageTo} for detail"
 exit 1
 fi
 
@@ -173,79 +221,75 @@ echo "Please check the log file in ${LogPath} for detail"
 exit 1
 fi
 
-##清理构建
-#echo "=============Cleanup previous build file============="
-##rm -rf ./build
-##xcodebuild clean -configuration "$configuration" -alltargets >> ${log_path}/log_clean
-##xcodebuild clean -workspace ${workspaceName} -scheme ${scheme} -configuration ${configuration} -alltargets >> ${log_path}/log_clean
-#if [ ${log_archive_A} = ${log_archive_B} ];then
-#comm="xcodebuild clean -workspace ${workspace_dir} -scheme ${scheme} -configuration ${configuration} >> ${log_path}/log_clean"
-#else
-#comm="xcodebuild clean -workspace ${workspace_dir} -scheme ${scheme} -configuration ${configuration}"
-#fi
-#echo ${comm}
-#eval ${comm}
-#if [ $? -eq 0 ];then
-#echo "===================Cleanup Done======================"
-#else
-#echo "===================Cleanup Failed===================="
-#cat ${log_path}/log_clean
-#echo "Please check the log file in ${log_path} for detail"
-#exit 1
-#fi
+#清理构建
+echo "=============Cleanup previous build file============="
+if [ ${log_archive_A} = ${log_archive_B} ];then
+comm="xcodebuild clean -workspace ${WorkspacePath} -scheme ${scheme} -configuration ${Configuration} >> ${LogPath}/log_clean"
+else
+comm="xcodebuild clean -workspace ${WorkspacePath} -scheme ${scheme} -configuration ${Configuration}"
+fi
+echo ${comm}
+eval ${comm}
+if [ $? -eq 0 ];then
+echo "===================Cleanup Done======================"
+else
+echo "===================Cleanup Failed===================="
+cat ${LogPath}/log_clean
+echo "Please check the log file in ${LogPath} for detail"
+exit 1
+fi
 
 #TODO: 更新build, 先不更新, 有需要再说
 #/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $archive_time" "${project_dir}/${project_name}/${scheme}.plist"
 
-##编译
-#echo "=================Build process start================="
-##xcodebuild archive -workspace "$workspaceName" -scheme "$scheme" -configuration "$configuration" -archivePath "$archivePath" CONFIGURATION_BUILD_DIR="$configurationBuildDir" CODE_SIGN_IDENTITY="$codeSignIdentity" PROVISIONING_PROFILE_SPECIFIER="$appStoreProvisioningProfile" DEBUG_INFORMATION_FORMAT='dwarf-with-dsym' DWARF_DSYM_FOLDER_PATH="${dSYMPath}/${project_name}${archive_time}.dSYM" >> ${log_path}/log_build
-#if [ ${log_archive_A} = ${log_archive_B} ];then
-#comm="xcodebuild archive -workspace ${workspace_dir} -scheme ${scheme} -configuration ${configuration} -archivePath ${archivePath} DWARF_DSYM_FOLDER_PATH=\"${dSYMPath}\" CONFIGURATION_BUILD_DIR=\"${configurationBuildDir}\" CODE_SIGN_IDENTITY=\"${codeSignIdentity}\" PROVISIONING_PROFILE_SPECIFIER=\"${appStoreProvisioningProfile}\" DEBUG_INFORMATION_FORMAT=\"dwarf-with-dsym\"  >> ${log_path}/log_build"
-#else
-#comm="xcodebuild archive -workspace ${workspace_dir} -scheme ${scheme} -configuration ${configuration} -archivePath ${archivePath} DWARF_DSYM_FOLDER_PATH=\"${dSYMPath}\" CONFIGURATION_BUILD_DIR=\"${configurationBuildDir}\" CODE_SIGN_IDENTITY=\"${codeSignIdentity}\" PROVISIONING_PROFILE_SPECIFIER=\"${appStoreProvisioningProfile}\" DEBUG_INFORMATION_FORMAT=\"dwarf-with-dsym\" "
-#fi
-#
-#echo ${comm}
-#eval ${comm}
-#if [ $? -eq 0 ];then
-#echo "====================Build Done======================="
-#else
-#echo "====================Build Failed====================="
-#cat ${log_path}/log_build
-#echo "Please check the log file in ${log_path} for detail"
-#exit 1
-#fi
+#编译
+echo "=================Build process start================="
+if [ ${log_archive_A} = ${log_archive_B} ];then
+comm="xcodebuild archive -workspace ${WorkspacePath} -scheme ${scheme} -configuration ${Configuration} -archivePath ${ArchivePath} DWARF_DSYM_FOLDER_PATH=\"${dSYMPath}\" CONFIGURATION_BUILD_DIR=\"${ConfigurationBuildPath}\" CODE_SIGN_IDENTITY=\"${codeSignIdentity}\" PROVISIONING_PROFILE_SPECIFIER=\"${appStoreProvisioningProfile}\" DEBUG_INFORMATION_FORMAT=\"dwarf-with-dsym\"  >> ${LogPath}/log_build"
+else
+comm="xcodebuild archive -workspace ${WorkspacePath} -scheme ${scheme} -configuration ${Configuration} -archivePath ${ArchivePath} DWARF_DSYM_FOLDER_PATH=\"${dSYMPath}\" CONFIGURATION_BUILD_DIR=\"${ConfigurationBuildPath}\" CODE_SIGN_IDENTITY=\"${codeSignIdentity}\" PROVISIONING_PROFILE_SPECIFIER=\"${appStoreProvisioningProfile}\" DEBUG_INFORMATION_FORMAT=\"dwarf-with-dsym\" "
+fi
+
+echo ${comm}
+eval ${comm}
+if [ $? -eq 0 ];then
+echo "====================Build Done======================="
+else
+echo "====================Build Failed====================="
+cat ${LogPath}/log_build
+echo "Please check the log file in ${LogPath} for detail"
+exit 1
+fi
 
 
-##打包ipa
-#echo "===================Export ipa file==================="
-#mkdir -p ${exportPath}
-#if [ $? -eq 0 ];then
-#echo "====================Create Done======================"
-#else
-#echo "====================Create Failed===================="
-#echo "Please check the log file in ${exportPath} for detail"
-#exit 1
-#fi
-##xcodebuild -exportArchive -archivePath "$archivePath" -exportOptionsPlist "$exportOptionsPlist" -exportPath "$exportPath" >> ${log_path}/log_archive
-#if [ ${log_archive_A} = ${log_archive_B} ];then
-#comm="xcodebuild -exportArchive -archivePath ${archivePath} -exportOptionsPlist ${exportOptionsPlist} -exportPath ${exportPath} >> ${log_path}/log_archive"
-#else
-#comm="xcodebuild -exportArchive -archivePath ${archivePath} -exportOptionsPlist ${exportOptionsPlist} -exportPath ${exportPath} "
-#fi
-#
-#echo ${comm}
-#eval ${comm}
-#if [ $? -eq 0 ];then
-#echo "====================Export Done======================"
-#echo ipa_package: ${exportPath}
-#else
-#echo "====================Export Failed===================="
-#cat ${log_path}/log_archive
-#echo "Please check the log file in ${log_path} for detail"
-#exit 1
-#fi
+#打包ipa
+echo "===================Export ipa file==================="
+mkdir -p ${ExportPath}
+if [ $? -eq 0 ];then
+echo "====================Create Done======================"
+else
+echo "====================Create Failed===================="
+echo "Please check the log file in ${ExportPath} for detail"
+exit 1
+fi
+if [ ${log_archive_A} = ${log_archive_B} ];then
+comm="xcodebuild -exportArchive -archivePath ${ArchivePath} -exportOptionsPlist ${ExportOptionsPlist} -exportPath ${ExportPath} >> ${LogPath}/log_archive"
+else
+comm="xcodebuild -exportArchive -archivePath ${ArchivePath} -exportOptionsPlist ${ExportOptionsPlist} -exportPath ${ExportPath} "
+fi
+
+echo ${comm}
+eval ${comm}
+if [ $? -eq 0 ];then
+echo "====================Export Done======================"
+cp -r ${PackagePath} ${ExportPackageTo}
+echo ipa_package: ${ExportPackageTo}
+else
+echo "====================Export Failed===================="
+cat ${LogPath}/log_archive
+echo "Please check the log file in ${LogPath} for detail"
+exit 1
+fi
 
 
 #上传

@@ -1,8 +1,11 @@
 
-brew --version
+#!/bin/sh
 
-pod --version
+ExportOptionsPlist="/Users/mac/.jenkins/workspace/ExportOptions.plist"
 
-echo  | sudo -S gem install fastlane
-
-sudo gem install cocoapods
+# 这里的-f参数判断$myFile是否存在
+if [ ! -f "${ExportOptionsPlist}" ]; then
+touch "${ExportOptionsPlist}"
+else
+echo "exist"
+fi
