@@ -1,5 +1,7 @@
 #!/bin/sh
-
+# 修改项目:
+# 1. 修改配置文件名
+# 2.
 #测试包配置文件: da07d28b-cff3-4f3b-b073-1de66d1a1ec4
 #发布包配置文件:
 echo "===================Archive Script===================="
@@ -12,7 +14,7 @@ echo "===================Archive Script===================="
 export LANG=en_US.UTF-8
 #base config
 #开发配置
-provisioningProfile_dev="da07d28b-cff3-4f3b-b073-1de66d1a1ec4"
+provisioningProfile_dev="1bc4ae1d-75d8-4383-bd7a-c51d049eac9c"
 #开发证书
 codeSignIdentity_dev="iPhone Developer: lei zhang (QYNKJGF5K9)"
 #TODO: 生产配置
@@ -31,16 +33,15 @@ ArchivePackagePath="/Users/mac/.jenkins/iOS_ARCHIVE_PACKAGE"
 Configuration="Debug"
 #TODO: archiverOpt.plist配置(根据入参配置: development / app-store)
 Method=development
-#签名风格
+#签名风格Automatic/manual
 SigningStyle=manual
 #一个AppleID一个teamID, 改变不了的
 TeamID=5DHMHMME2V
 
 #log是否存文档
-log_archive_A=0
+log_archive_A=1
 log_archive_B=1
 ########################环境变量结束########################
-
 # ============= 获取wordSpace路径 =============
 TaskWorkSpacePath=$(pwd)
 echo TaskWorkSpacePath: $TaskWorkSpacePath
@@ -70,6 +71,8 @@ if [ ${each} != "KMTGlobe" ];then
 scheme=${each}
 fi
 done
+
+ehco "==============================================lzx: scheme = ${scheme}"
 
 
 # ============= 配置证书 =============
